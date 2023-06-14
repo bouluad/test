@@ -1,0 +1,16 @@
+---
+- name: Setup Jenkins slave node
+  hosts: jenkins_agents
+  become: true
+
+  vars:
+    jenkins_master_url: "http://jenkins-master:8080"
+    jenkins_agent_name: "linux-agent"
+    jenkins_agent_work_dir: "/var/lib/jenkins"
+    jenkins_ssh_key: "/path/to/ssh/key"
+    jenkins_agent_credentials_id: "ssh-agent-credentials"
+    jenkins_master_host: "jenkins-master"
+    jenkins_master_port: 50000
+
+  roles:
+    - jenkins_slave_node
