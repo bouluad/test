@@ -1,0 +1,33 @@
+---
+- name: Install Java
+  package:
+    name: java-1.8.0-openjdk
+    state: present
+
+- name: Create Jenkins agent workspace directory
+  file:
+    path: "{{ jenkins_agent_work_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download Jenkins agent JAR
+  get_url:
+    url: "{{ jenkins_master_url }}/jnlpJars/agent.jar"
+    dest: "{{ jenkins_agent_work_dir }}/agent.jar"
+    mode: '0755'
+
+- name: Configure SSH key for Jenkins agent
+  copy:
+    src: "{{ jenkins_ssh_key }}"
+    dest: "{{ jenkins_agent_work_dir }}/ssh_key"
+    mode: '0600'
+
+- name: Register Jenkins agent
+  jenkins_agent:
+    url: "{{ jenkins_master_url }}"
+    name: "{{ jenkins_agent_name }}"
+    remote_fs: "{{ jenkins_agent_work_dir }}"
+    credentials_id: "{{ jenkins_agent_credentials_id }}"
+    tunnel: "{{ jenkins_master_host }}:{{ jenkins_master_port }}"
+    launch_method: "ssh"
+    launch_args: "-i {{ jenkins_agent_work_dir }}/ssh_key"
