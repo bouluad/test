@@ -23,6 +23,8 @@
     mode: '0600'
 
 - name: Register Jenkins agent
+  command: java -jar {{ jenkins_agent_work_dir }}/agent.jar -jnlpUrl {{ jenkins_master_url }}/computer/{{ jenkins_agent_name }}/slave-agent.jnlp -workDir "{{ jenkins_agent_work_dir }}"
+- name: Register Jenkins agent
   jenkins_agent:
     url: "{{ jenkins_master_url }}"
     name: "{{ jenkins_agent_name }}"
