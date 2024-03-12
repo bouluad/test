@@ -2,9 +2,51 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 from collections import deque
+from html.parser import HTMLParser
+import re
+import os
 
 # Regex pattern to match a URL
 HTTP_URL_PATTERN = r'^http[s]{0,1}://.+$'
+
+# Create a class to parse the HTML and get the hyperlinks
+class HyperlinkParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        # Create a list to store the hyperlinks
+        self.hyperlinks = []
+
+    # Override the HTMLParser's handle_starttag method to get the hyperlinks
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+
+        # If the tag is an anchor tag and it has an href attribute, add the href attribute to the list of hyperlinks
+        if tag == "a" and "href" in attrs:
+            self.hyperlinks.append(attrs["href"])
+
+# Define the function to get the hyperlinks from a URL
+def get_hyperlinks(url):
+    
+    # Try to open the URL and read the HTML
+    try:
+        # Open the URL and read the HTML
+        with requests.get(url) as response:
+
+            # If the response is not HTML, return an empty list
+            if not response.headers.get('Content-Type', '').startswith("text/html"):
+                return []
+            
+            # Decode the HTML
+            html = response.text
+    except Exception as e:
+        print(e)
+        return []
+
+    # Create the HTML Parser and then Parse the HTML to get hyperlinks
+    parser = HyperlinkParser()
+    parser.feed(html)
+
+    return parser.hyperlinks
 
 # Define the function to get all URLs from a given URL
 def get_domain_hyperlinks(local_domain, url):
