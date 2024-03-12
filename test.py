@@ -2,7 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 
-def get_all_urls(base_url):
+def get_all_urls(base_url, depth, current_depth=1):
+    if current_depth > depth:
+        return set()
+
     # Send a GET request to the base URL
     response = requests.get(base_url)
 
@@ -28,17 +31,24 @@ def get_all_urls(base_url):
                 if path and path != '/':
                     urls.add(urljoin(url, path))
 
+        # Recursively get URLs from linked pages up to the specified depth
+        if current_depth < depth:
+            for url in urls.copy():
+                urls |= get_all_urls(url, depth, current_depth + 1)
+
         return urls
     else:
         # If the request was not successful, print an error message
         print("Failed to retrieve page:", response.status_code)
+        return set()
 
 # Example usage:
 if __name__ == "__main__":
     url = input("Enter the URL: ")
-    all_urls = get_all_urls(url)
+    depth = int(input("Enter the depth (up to 6): "))
+    all_urls = get_all_urls(url, depth)
     if all_urls:
-        print("All URLs found under", url, ":")
+        print("All URLs found up to depth", depth, "under", url, ":")
         for url in all_urls:
             print(url)
     else:
