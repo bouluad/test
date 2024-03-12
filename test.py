@@ -22,7 +22,11 @@ def get_all_urls(base_url):
             if href:
                 # Normalize the URL by joining with base URL
                 url = urljoin(base_url, href.strip())
-                urls.add(url)
+                # Add anything after `/` to the URL
+                url_parts = urlparse(url)
+                path = url_parts.path
+                if path and path != '/':
+                    urls.add(urljoin(url, path))
 
         return urls
     else:
