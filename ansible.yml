@@ -1,0 +1,53 @@
+---
+- name: Create Python virtual environments
+  hosts: all
+  become: yes  # Assumes you need root privileges to write to /opt
+  tasks:
+
+    - name: Ensure Python 3.6.15 is available
+      ansible.builtin.command: /usr/bin/python3.6 --version
+      register: python_3_6_version
+      ignore_errors: yes
+
+    - name: Ensure Python 3.9.7 is available
+      ansible.builtin.command: /usr/bin/python3.9 --version
+      register: python_3_9_version
+      ignore_errors: yes
+
+    - name: Ensure Python 3.10.1 is available
+      ansible.builtin.command: /usr/bin/python3.10 --version
+      register: python_3_10_version
+      ignore_errors: yes
+
+    - name: Fail if Python 3.6.15 is not installed
+      ansible.builtin.fail:
+        msg: "Python 3.6.15 is not installed."
+      when: python_3_6_version.rc != 0
+
+    - name: Fail if Python 3.9.7 is not installed
+      ansible.builtin.fail:
+        msg: "Python 3.9.7 is not installed."
+      when: python_3_9_version.rc != 0
+
+    - name: Fail if Python 3.10.1 is not installed
+      ansible.builtin.fail:
+        msg: "Python 3.10.1 is not installed."
+      when: python_3_10_version.rc != 0
+
+    - name: Create virtual environment for Python 3.6.15
+      ansible.builtin.command:
+        cmd: /usr/bin/python3.6 -m venv /opt/max2022
+      args:
+        creates: /opt/max2022
+
+    - name: Create virtual environment for Python 3.9.7
+      ansible.builtin.command:
+        cmd: /usr/bin/python3.9 -m venv /opt/max2023
+      args:
+        creates: /opt/max2023
+
+    - name: Create virtual environment for Python 3.10.1
+      ansible.builtin.command:
+        cmd: /usr/bin/python3.10 -m venv /opt/max2024
+      args:
+        creates: /opt/max2024
