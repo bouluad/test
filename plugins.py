@@ -18,8 +18,13 @@ try:
         plugins_info = json.loads(result.stdout)
         plugins = plugins_info.get("plugins", [])
         
-        print("Installed Jenkins Plugins:")
-        for plugin in plugins:
-            print(f"Plugin: {plugin['shortName']}, Version: {plugin['version']}, Active: {plugin['active']}, Enabled: {plugin['enabled']}")
+        # Create a dictionary with plugin names and versions
+        plugin_versions = {plugin['shortName']: plugin['version'] for plugin in plugins}
+        
+        # Save the dictionary to a JSON file
+        with open('plugins.json', 'w') as json_file:
+            json.dump(plugin_versions, json_file, indent=4)
+        
+        print("Plugin information has been saved to plugins.json")
 except Exception as e:
     print(f"Exception occurred: {str(e)}")
