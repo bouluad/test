@@ -2,11 +2,11 @@ import requests
 import openpyxl
 from datetime import datetime
 
-# Function to get the last job executed date from Jenkins
+# Function to recursively get the last job executed date from Jenkins
 def get_last_job_executed_date(url, username, api_token):
     try:
-        # Jenkins API endpoint to list all jobs
-        api_url = f"{url}/api/json?tree=jobs[name,lastBuild[timestamp]]"
+        # Jenkins API endpoint to list all jobs and folders
+        api_url = f"{url}/api/json?tree=jobs[name,url,color,lastBuild[timestamp],jobs[name,url,color,lastBuild[timestamp]]]"
         response = requests.get(api_url, auth=(username, api_token))
         response.raise_for_status()
         
@@ -16,14 +16,23 @@ def get_last_job_executed_date(url, username, api_token):
         
         # Find the latest job execution date
         last_execution_time = None
-        for job in jobs:
-            last_build = job.get('lastBuild')
-            if last_build:
-                timestamp = last_build.get('timestamp')
-                if timestamp:
-                    execution_time = datetime.fromtimestamp(timestamp / 1000.0)
-                    if not last_execution_time or execution_time > last_execution_time:
-                        last_execution_time = execution_time
+        
+        # Function to traverse jobs and sub-jobs
+        def traverse_jobs(jobs):
+            nonlocal last_execution_time
+            for job in jobs:
+                last_build = job.get('lastBuild')
+                if last_build:
+                    timestamp = last_build.get('timestamp')
+                    if timestamp:
+                        execution_time = datetime.fromtimestamp(timestamp / 1000.0)
+                        if not last_execution_time or execution_time > last_execution_time:
+                            last_execution_time = execution_time
+                # Check if the job is a folder and has sub-jobs
+                if 'jobs' in job:
+                    traverse_jobs(job['jobs'])
+        
+        traverse_jobs(jobs)
         
         if last_execution_time:
             return last_execution_time.strftime('%Y-%m-%d %H:%M:%S')
