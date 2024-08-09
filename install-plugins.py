@@ -14,11 +14,19 @@ json_file_path = "plugins.json"
 with open(json_file_path, "r") as file:
     plugins = json.load(file)
 
-# Jenkins API endpoint for installing plugins
-install_url = f"{jenkins_url}/pluginManager/installNecessaryPlugins"
+# Function to get a CSRF crumb from Jenkins
+def get_crumb():
+    crumb_url = f"{jenkins_url}/crumbIssuer/api/json"
+    response = requests.get(crumb_url, auth=HTTPBasicAuth(username, api_token))
+
+    if response.status_code == 200:
+        crumb_data = response.json()
+        return {crumb_data['crumbRequestField']: crumb_data['crumb']}
+    else:
+        raise Exception(f"Failed to get crumb: Status Code: {response.status_code}, Response: {response.text}")
 
 # Function to install a single plugin
-def install_plugin(plugin_name, plugin_version):
+def install_plugin(plugin_name, plugin_version, crumb):
     # The payload format expected by Jenkins
     payload = {
         "dynamicLoad": True,
@@ -27,10 +35,14 @@ def install_plugin(plugin_name, plugin_version):
             "version": plugin_version
         }]
     }
-    
+
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        **crumb  # Include the crumb in the headers
     }
+
+    # Jenkins API endpoint for installing plugins
+    install_url = f"{jenkins_url}/pluginManager/installNecessaryPlugins"
 
     # Send the POST request to install the plugin
     response = requests.post(install_url, 
@@ -44,8 +56,16 @@ def install_plugin(plugin_name, plugin_version):
         print(f"Failed to install plugin {plugin_name} version {plugin_version}.")
         print(f"Status Code: {response.status_code}, Response: {response.text}")
 
-# Install each plugin from the JSON file
-for plugin_name, plugin_version in plugins.items():
-    install_plugin(plugin_name, plugin_version)
+# Main script execution
+try:
+    crumb = get_crumb()
+    print("Successfully retrieved crumb.")
+    
+    # Install each plugin from the JSON file
+    for plugin_name, plugin_version in plugins.items():
+        install_plugin(plugin_name, plugin_version, crumb)
+    
+    print("All plugins installation requests have been sent.")
 
-print("All plugins installation requests have been sent.")
+except Exception as e:
+    print(f"An error occurred: {e}")
